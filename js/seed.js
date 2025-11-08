@@ -1,6 +1,52 @@
 import { ensureSeed } from "./db.js";
 import { showAlert } from "./ui.js";
 
+import { listDocs, createDoc } from "./db.js";
+
+const DATASETS = {
+  genres: [
+    { name: "Ação", description: "..." },
+    { name: "Aventura", description: "..." },
+  ],
+  people: [
+    { name: "Denis Villeneuve", role: "Diretor" },
+  ],
+  movies: [
+    { title: "Blade Runner 2049", year: 2017, genres: ["Ficção científica","Drama"], rating: 8.7 },
+  ],
+  reviews: [
+    { movieTitle: "Blade Runner 2049", personName: "Christopher Nolan", score: 9.5, comment: "..." },
+  ],
+  collections: [
+    { name: "Favoritos", items: ["Blade Runner 2049","Matrix"] },
+  ],
+};
+
+async function seedIfEmpty(collection, items){
+  const list = await listDocs(collection);
+  if (!list || list.length === 0){
+    for (const it of items) await createDoc(collection, it);
+    console.log(`[seed] ${collection}: inseridos ${items.length}`);
+    return true;
+  }
+  console.log(`[seed] ${collection}: já possui ${list.length}, pulando`);
+  return false;
+}
+
+(async function runSeed(){
+  try{
+    const results = await Promise.all(Object.entries(DATASETS).map(([k,v]) => seedIfEmpty(k, v)));
+    if (results.some(Boolean)) {
+      console.log("[seed] Executado");
+    } else {
+      console.log("[seed] Nada a fazer (dados já existem)");
+    }
+  } catch(e){
+    console.error("[seed] Falhou:", e);
+  }
+})();
+
+
 const defaultGenres = [
   { name: "Ação", description: "Filmes com alto nível de energia, lutas e perseguições." },
   { name: "Aventura", description: "Exploração, jornadas e descobertas." },
